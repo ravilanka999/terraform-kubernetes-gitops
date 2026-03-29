@@ -1,0 +1,44 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: demo-app
+spec:
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 60  # Lower threshold for prod (scale preemptively)
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 75
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 600  # 10 minutes - slower scale down in prod
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60  # Gentle scale down (10% per minute)
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      selectPolicy: Min  # Be conservative when scaling down
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+      - type: Pods
+        value: 4
+        periodSeconds: 60
+      selectPolicy: Max
+      - type: Pods
+        value: 1
+        periodSeconds: 15  # Quick burst response

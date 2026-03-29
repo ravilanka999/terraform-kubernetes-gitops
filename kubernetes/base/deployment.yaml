@@ -1,0 +1,157 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app
+  labels:
+    app.kubernetes.io/name: demo-app
+    app.kubernetes.io/instance: demo-app
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: argocd
+    component: app
+    project: gitops-demo
+    tier: application
+    environment: all
+spec:
+  replicas: 2  # Override per environment via Kustomize
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: demo-app
+      app.kubernetes.io/instance: demo-app
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0  # Ensure zero downtime during deployments
+  minReadySeconds: 30  # Wait 30s before marking pod ready
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: demo-app
+        app.kubernetes.io/instance: demo-app
+        app.kubernetes.io/version: "1.0.0"
+        component: app
+        project: gitops-demo
+        tier: application
+        environment: all
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      # Security Context at pod level
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 2000
+        seccompProfile:
+          type: RuntimeDefault
+
+      # Node selection (optional - for dedicated nodes)
+      # nodeSelector:
+      #   node-role.kubernetes.io/worker: "true"
+
+      # Toleration for taints (if using dedicated nodes)
+      # tolerations:
+      # - key: "dedicated"
+      #   operator: "Equal"
+      #   value: "general"
+      #   effect: "NoSchedule"
+
+      containers:
+      - name: demo-app
+        image: nginx:alpine  # Replace with your app image
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "Demo app starting..." > /tmp/startup.log
+            # Start your application here
+            # For demo: serve static content
+            nginx -g 'daemon off;'
+
+        # Ports
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        - name: metrics
+          containerPort: 8080
+          protocol: TCP
+
+        # Health Probes - CRITICAL for production
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30  # Give app time to start
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 3
+
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 30  # Allow 5 minutes (30×10s) to start
+
+        # Resource Requirements - MUST HAVE
+        resources:
+          requests:
+            cpu: "100m"       # 0.1 vCPU
+            memory: "128Mi"   # 128 MB
+          limits:
+            cpu: "500m"       # 0.5 vCPU max
+            memory: "256Mi"   # 256 MB max
+
+        # Environment Variables
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: APP_ENV
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['environment']
+        # - name: DATABASE_URL
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: app-secrets
+        #       key: database-url
+
+        # Volume mounts (if needed)
+        # volumeMounts:
+        # - name: config
+        #   mountPath: /etc/app/config.yaml
+        #   subPath: config.yaml
+        #   readOnly: true
+
+      # Volumes (if needed)
+      # volumes:
+      # - name: config
+      #   configMap:
+      #     name: app-config
+
+      # Termination Grace Period
+      terminationGracePeriodSeconds: 30
+
+      # Restart Policy
+      restartPolicy: Always
+
+      # Image Pull Secrets (for private registries)
+      # imagePullSecrets:
+      # - name: ecr-registry-credentials

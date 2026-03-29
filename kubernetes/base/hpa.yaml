@@ -1,0 +1,58 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: demo-app
+  labels:
+    app.kubernetes.io/name: demo-app
+    app.kubernetes.io/instance: demo-app
+    component: autoscaling
+    project: gitops-demo
+    tier: application
+    environment: all
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: demo-app
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70  # Scale up when CPU > 70%
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80  # Scale up when Memory > 80%
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300  # Wait 5min before scaling down
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60  # Scale down by max 50% every minute
+      - type: Pods
+        value: 2
+        periodSeconds: 60  # Or by max 2 pods per minute
+      selectPolicy: Max  # Choose most aggressive policy
+    scaleUp:
+      stabilizationWindowSeconds: 0  # Scale up immediately
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 60  # Scale up by max 100% every minute
+      - type: Pods
+        value: 4
+        periodSeconds: 60  # Or by max 4 pods per minute
+      selectPolicy: Max  # Choose most aggressive policy
+      - type: Pods
+        value: 1
+        periodSeconds: 15  # Rapid scaling for burst workloads (first 15s)
+      condition:
+        type: Pods
+        value: 1

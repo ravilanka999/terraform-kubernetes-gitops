@@ -1,0 +1,49 @@
+# Development Environment Overlay
+namespace: dev  # Target namespace for all resources
+
+resources:
+  - ../../base
+
+# Modify resource names to include environment prefix (optional)
+namePrefix: "dev-"
+
+# Common labels for dev environment
+commonLabels:
+  environment: dev
+
+# Override replica count for dev (smaller for cost savings)
+patchesStrategicMerge:
+  - replica-patch.yaml
+  - hpa-dev-patch.yaml
+
+# Image configuration for dev
+images:
+  - name: nginx  # Match base deployment image name
+    newTag: "alpine"
+    newName: "nginx"  # Could point to your dev ECR
+
+# ConfigMapGenerator for dev-specific config (if needed)
+configMapGenerator:
+  - name: demo-app-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=debug
+      - APP_ENV=development
+      - ENABLE_MOCKS=true
+    options:
+      disableNameSuffixHash: true
+
+# SecretGenerator (for dev environment - NEVER use this in prod)
+# secretGenerator:
+# - name: demo-app-secrets
+#   literals:
+#   - db-password=devpassword123
+#   - api-key=devkey456
+#   options:
+#     disableNameSuffixHash: true
+#     annotations:
+#       argocd.argoproj.io/sync-options: Prune=false
+
+# Common annotations for dev
+commonAnnotations:
+  argocd.argoproj.io/sync-options: "Prune=false"  # Don't delete dev resources accidentally

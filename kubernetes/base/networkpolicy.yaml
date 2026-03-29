@@ -1,0 +1,115 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: demo-app-allow-ingress
+  labels:
+    app.kubernetes.io/name: demo-app
+    app.kubernetes.io/instance: demo-app
+    component: networkpolicy
+    project: gitops-demo
+    tier: application
+    environment: all
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: demo-app
+      app.kubernetes.io/instance: demo-app
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow traffic from frontend (if applicable)
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: frontend
+          app.kubernetes.io/instance: frontend
+    ports:
+    - protocol: TCP
+      port: 80
+  # Allow traffic from ingress controller (nginx, alb, etc.)
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx  # or argocd, alb
+    ports:
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 8080
+  # Allow metrics scraping from Prometheus
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 8080
+  # Allow all traffic from within the same namespace (for internal comms)
+  - from:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 8080
+  egress:
+  # Allow all egress (outbound to internet, databases, etc.)
+  # For tighter security, restrict egress to specific services
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+    ports:
+    - protocol: TCP
+      port: 53  # DNS
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 443  # HTTPS
+    - protocol: TCP
+      port: 80  # HTTP
+  # Allow egress to database namespaces
+  - to:
+    - podSelector:
+        matchLabels:
+          component: database
+    ports:
+    - protocol: TCP
+      port: 5432  # PostgreSQL
+    - protocol: TCP
+      port: 3306  # MySQL
+    - protocol: TCP
+      port: 27017  # MongoDB
+    - protocol: TCP
+      port: 6379  # Redis
+  # Allow egress to message brokers
+  - to:
+    - podSelector:
+        matchLabels:
+          component: messaging
+    ports:
+    - protocol: TCP
+      port: 5672  # RabbitMQ
+    - protocol: TCP
+      port: 9092  # Kafka
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: demo-app-deny-all-other-ingress
+  labels:
+    app.kubernetes.io/name: demo-app
+    app.kubernetes.io/instance: demo-app
+    component: networkpolicy
+    project: gitops-demo
+    tier: application
+    environment: all
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: demo-app
+      app.kubernetes.io/instance: demo-app
+  policyTypes:
+  - Ingress
+  # No ingress rules here - deny all except what's defined above

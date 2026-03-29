@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: infra-apps
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: infra-apps
+    app.kubernetes.io/instance: infra-apps
+    component: gitops
+    project: gitops-demo
+    tier: infrastructure
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ravilanka999/terraform-kubernetes-gitops.git
+    targetRevision: main
+    path: kubernetes/infra-manifests  # Will create this directory with infra resources
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system  # Deploy cluster-wide resources to kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=false  # kube-system exists
+    - PruneLast=true
+    - Validate=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  # Infra apps are critical - sync first
+  info:
+  - name: 'Purpose'
+    value: 'Infrastructure Components'
+  - name: 'Components'
+    value: 'StorageClass, Ingress Controller, DNS, Cert Manager'

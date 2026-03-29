@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dev
+  labels:
+    name: dev
+    purpose: development
+    environment: dev
+    project: gitops-demo
+    tier: application
+    compliance: "low"
+    cost-center: "dev-001"
+    backup-policy: "daily"
+    security-level: "standard"
+  annotations:
+    description: "Development environment for testing and experimentation"
+    owner: "devops-team"
+    slack-channel: "#dev-deployments"

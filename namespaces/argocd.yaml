@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+  labels:
+    name: argocd
+    purpose: gitops
+    environment: infra
+    project: argocd
+    tier: infrastructure
+    compliance: "low"

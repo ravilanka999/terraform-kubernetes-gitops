@@ -1,0 +1,37 @@
+# AWS Configuration
+aws_region     = "ap-southeast-2"  # Sydney region
+aws_profile    = "default"
+
+# Project Naming
+project_name   = "gitops-demo"
+environment    = "dev"
+tags = {
+  Owner       = "DevOps Engineer"
+  Project     = "GitOps Platform"
+  Environment = "Development"
+  ManagedBy   = "Terraform"
+}
+
+# VPC Configuration
+vpc_cidr              = "10.0.0.0/16"
+public_subnet_cidrs   = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+private_subnet_cidrs  = ["10.0.11.0/24", "10.0.12.0/24", "10.0.13.0/24"]
+database_subnet_cidrs = ["10.0.21.0/24", "10.0.22.0/24", "10.0.23.0/24"]
+availability_zones    = ["ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"]
+
+# EKS Configuration
+eks_cluster_name    = "gitops-eks"
+kubernetes_version  = "1.33"
+eks_node_instance_type = "m5.xlarge"
+eks_node_min_size   = 2
+eks_node_max_size   = 10
+eks_node_desired_size = 2
+
+# Enable EKS addons (voted by aws eks)
+enable_coredns           = true
+enable_ebs_csi_driver    = true
+enable_vpc_cni           = true
+enable_pod_identity      = true
+
+# Security Groups (optional - if you want to use custom SGs)
+create_additional_sgs    = false

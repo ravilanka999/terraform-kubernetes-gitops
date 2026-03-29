@@ -1,0 +1,76 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-app
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: demo-app
+    app.kubernetes.io/instance: demo-app
+    component: gitops
+    project: gitops-demo
+    tier: infrastructure
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/ravilanka999/terraform-kubernetes-gitops.git
+    targetRevision: main  # Could use branch per environment: dev → dev branch, prod → main
+    path: kubernetes/overlays/dev  # For dev environment; use param or separate app for prod
+    directory:
+      recurse: true
+      jsonnet: {}
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dev  # Target namespace - must exist or CreateNamespace=true
+
+  project: default
+
+  syncPolicy:
+    automated:
+      prune: true      # Delete resources removed from Git
+      selfHeal: true  # Revert manual changes in cluster
+    syncOptions:
+    - CreateNamespace=true  # Auto-create target namespace if missing
+    - PruneLast=true        # Safety: don't delete if pruning removes last resource
+    - Validate=true         # Validate manifests before applying
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # Ignore certain resources during sync
+  ignoreDifferences:
+  - group: apps
+    kind: Deployment
+    jsonPointers:
+    - /spec/replicas  # Allow HPA to manage replica count without drift detection
+
+  # Sync window (uncomment to restrict sync times)
+  # syncOptions:
+  # - SyncOptions=...
+
+  # Health checks
+  healthCheck:
+    timeout: 60
+    podHealthCheck:
+      namespace: dev
+      selector:
+        matchLabels:
+          app.kubernetes.io/name: demo-app
+
+  # Information for UI display
+  info:
+  - name: 'Environment'
+    value: 'Development'
+  - name: 'Application'
+    value: 'Demo App'
+  - name: 'GitHub'
+    value: 'https://github.com/ravilanka999/terraform-kubernetes-gitops'
+
+  # Annotations for integration with other tools
+  annotations:
+    argocd.argoproj.io/compare-options: "IgnoreExtraneous"
+    argocd.argoproj.io/sync-options: "Prune=false,SkipDryRunOnMissingResource=true"

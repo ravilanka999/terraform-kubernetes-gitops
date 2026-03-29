@@ -1,0 +1,45 @@
+# Production Environment Overlay
+namespace: prod  # Target namespace for all resources
+
+resources:
+  - ../../base
+
+# No name prefix in prod (clean resource names)
+namePrefix: ""
+
+# Common labels for prod
+commonLabels:
+  environment: prod
+  importance: "high"
+
+# Override replica count and HPA for production
+patchesStrategicMerge:
+  - replica-patch.yaml
+  - hpa-prod-patch.yaml
+  - probe-timeout-patch.yaml
+
+# Image configuration for prod (use specific version, not :latest)
+images:
+  - name: nginx
+    newTag: "1.21-alpine"  # Pin to specific version in prod
+    # newName: "your-account-id.dkr.ecr.ap-southeast-2.amazonaws.com/your-app"
+
+# ConfigMapGenerator for prod (more conservative settings)
+configMapGenerator:
+  - name: demo-app-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=warn
+      - APP_ENV=production
+      - ENABLE_MOCKS=false
+      - DB_POOL_SIZE=20
+    options:
+      disableNameSuffixHash: true
+
+# In production, use external secrets management (external-secrets, secrets-manager)
+# Do NOT store secrets in Git!
+# secretGenerator: []  # Explicitly disable secret generation
+
+# Production annotations
+commonAnnotations:
+  argocd.argoproj.io/sync-wave: "20"

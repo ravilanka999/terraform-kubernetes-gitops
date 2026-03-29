@@ -1,0 +1,49 @@
+# Kustomize Base Configuration
+# This directory contains the base manifests that are common to all environments
+
+resources:
+  - deployment.yaml
+  - service.yaml
+  - hpa.yaml
+  - configmap.yaml
+  - networkpolicy.yaml
+
+# Common labels applied to all resources
+commonLabels:
+  app.kubernetes.io/managed-by: argocd
+  environment: all
+
+# Common annotations (if needed)
+commonAnnotations:
+  argocd.argoproj.io/sync-wave: "10"
+  # argocd.argoproj.io/refresh: normal
+
+# Name prefix for all resources (optional)
+namePrefix: ""
+
+# Images can be overridden in overlays
+images:
+  - name: nginx  # Replace with your actual image name
+    newTag: "alpine"
+
+# ConfigMapGenerator for generating configmaps from files (optional)
+# configMapGenerator:
+# - name: app-config
+#   files:
+#   - config.properties
+
+# SecretGenerator (use with caution - prefer external secrets)
+# secretGenerator:
+# - name: app-secrets
+#   literals:
+#   - db-password=CHANGE_ME
+#   options:
+#     disableNameSuffixHash: true  # Don't append hash to name
+
+# Transformers (apply patches, labels, annotations)
+transformers:
+  - namespace-transform.yaml  # Optional: automatically set namespace
+
+# CRDs (if your app needs custom resources)
+# crds:
+# - crd.yaml

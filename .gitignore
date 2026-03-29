@@ -1,0 +1,72 @@
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+
+# AWS
+.aws/
+credentials
+.DS_Store
+aws/config
+aws/credentials
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+*.out
+
+# Kubernetes
+.kube/
+kubeconfig
+kubeconfig.*
+
+# Helm
+helm/charts/
+helm/*.tgz
+
+# Testing
+/test/
+coverage/
+*.coverage
+
+# Local files
+local.tfvars
+secrets.tfvars
+creds.*
+
+# Mac
+.AppleDouble
+.LSOverride
+
+# Node.js
+node_modules/
+package-lock.json
+
+# Python
+__pycache__/
+*.pyc
+venv/
+env/
+
+# Jenkins
+Jenkinsfile.bak
+
+# Custom
+secrets/
+*.key
+*.pem

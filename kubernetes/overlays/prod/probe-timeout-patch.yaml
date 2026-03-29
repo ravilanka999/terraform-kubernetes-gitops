@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app
+spec:
+  template:
+    spec:
+      containers:
+      - name: demo-app
+        livenessProbe:
+          initialDelaySeconds: 15  # Smaller in prod (faster failure detection)
+          periodSeconds: 10
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 2  # Lower timeout in prod
+          successThreshold: 1
+          failureThreshold: 3
+        startupProbe:
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 2  # Faster startup detection
+          successThreshold: 1
+          failureThreshold: 40  # ~3.5 minutes max startup time

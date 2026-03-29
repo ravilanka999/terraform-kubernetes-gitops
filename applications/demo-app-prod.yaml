@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-app-prod
+  namespace: argocd
+spec:
+  project: gitops-platform
+  source:
+    repoURL: https://github.com/ravilanka999/terraform-kubernetes-gitops.git
+    targetRevision: main
+    path: kubernetes/overlays/prod
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+    - CreateNamespace=true
+    - PruneLast=true
+    - Validate=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  # Production sync requires manual approval (optional)
+  # syncPolicy:
+  #   automated:
+  #     prune: true
+  #     selfHeal: true
+  #   syncOptions:
+  #   - CreateNamespace=true
+  #   - PruneLast=true
+  #   - Validate=true
+  #   - SyncOptions=...
+  #   # Disable auto-sync for prod if you want manual approvals:
+  #   automated: null
+  #   # Then use manual sync or PR-based sync
+  info:
+  - name: 'Environment'
+    value: 'Production'
+  - name: 'Auto-sync'
+    value: 'Enabled (consider manual approvals for critical changes)'
+  - name: 'Safety'
+    value: 'Prune=true, SelfHeal=true'

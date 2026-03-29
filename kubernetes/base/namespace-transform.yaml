@@ -1,0 +1,9 @@
+apiVersion: builtin
+kind: NamespaceTransformer
+metadata:
+  name: "not-used"
+  namespace: "not-used"
+patch: |-
+  # This transformer allows overlays to set namespace via: namespace: dev
+  # If no namespace is specified in the overlay, resources get created in 'default'
+  # You can override this behavior by setting: namespace: "your-namespace" in overlay kustomization.yaml

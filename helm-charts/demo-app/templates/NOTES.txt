@@ -1,0 +1,40 @@
+-------------------------------------------------------------------------------
+Application deployed successfully!
+
+Name:          {{ include "demo-app.fullname" . }}
+Namespace:           {{ .Release.Namespace }}
+Status:         Running
+Replicas:           {{ .Values.replicaCount }}
+Image:               {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
+
+Services:
+  - Internal:     {{ include "demo-app.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
+  - External:     {{- if eq .Values.service.type "LoadBalancer" }}
+                    LoadBalancer Ingress: {{ (first .Values.ingress.hosts).host | default (printf "%s.elb.amazonaws.com" (include "demo-app.fullname" .)) }}
+                  {{- else if .Values.ingress.enabled }}
+                    Ingress: {{ (first .Values.ingress.hosts).host }}
+                  {{- else }}
+                    No external access (ClusterIP)
+                  {{- end }}
+
+HPA:
+  Min Replicas:    {{ .Values.autoscaling.minReplicas }}
+  Max Replicas:    {{ .Values.autoscaling.maxReplicas }}
+  Target CPU:      {{ .Values.autoscaling.targetCPUUtilizationPercentage }}%
+  Target Memory:   {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}%
+
+To view pods:
+  kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+To view logs:
+  kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }} --tail=100 -f
+
+To scale manually:
+  kubectl scale deployment {{ include "demo-app.fullname" . }} -n {{ .Release.Namespace }} --replicas=N
+
+To delete:
+  helm delete {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+For more information, visit:
+  https://github.com/ravilanka999/terraform-kubernetes-gitops
+-------------------------------------------------------------------------------

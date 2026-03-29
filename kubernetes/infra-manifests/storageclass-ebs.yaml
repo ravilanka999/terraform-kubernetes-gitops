@@ -1,0 +1,70 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ebs-sc
+  labels:
+    app.kubernetes.io/name: ebs-storage-class
+    app.kubernetes.io/instance: ebs-sc
+    component: infrastructure
+    project: gitops-demo
+    tier: infrastructure
+    purpose: "persistent-block-storage"
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"  # Set "true" to make default
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp3
+  encrypted: "true"
+  kmsKeyId: ""  # Optional: specify custom KMS key for encryption
+reclaimPolicy: Retain  # Retain volume when PVC deleted (data safety)
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer  # Delay volume creation until pod scheduling
+fsType: ext4
+
+---
+# Optional: Faster SSD storage for databases
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ebs-io1-sc
+  labels:
+    app.kubernetes.io/name: ebs-io1-storage-class
+    app.kubernetes.io/instance: ebs-io1-sc
+    component: infrastructure
+    project: gitops-demo
+    tier: infrastructure
+    purpose: "high-iops-databases"
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+provisioner: ebs.csi.aws.com
+parameters:
+  type: io1
+  iopsPerGB: "10"  # 10 IOPS per GiB - adjust based on needs
+  encrypted: "true"
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+fsType: ext4
+
+---
+# Default StorageClass (optional - sets the default for PVCs without storageClassName)
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: standard
+  labels:
+    app.kubernetes.io/name: standard-storage-class
+    app.kubernetes.io/instance: standard-sc
+    component: infrastructure
+    project: gitops-demo
+    tier: infrastructure
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp3
+  encrypted: "true"
+reclaimPolicy: Delete  # Default can delete unused volumes
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+fsType: ext4

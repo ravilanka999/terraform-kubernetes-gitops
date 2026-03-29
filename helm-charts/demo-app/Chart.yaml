@@ -1,0 +1,31 @@
+apiVersion: v2
+name: demo-app
+description: Demo application Helm chart for GitOps platform
+type: application
+version: 1.0.0  # Chart version
+appVersion: "1.0.0"  # Application version
+
+keywords:
+  - demo
+  - gitops
+  - eks
+  - helm
+  - argo-cd
+
+home: https://github.com/ravilanka999/terraform-kubernetes-gitops
+sources:
+  - https://github.com/ravilanka999/terraform-kubernetes-gitops
+  - https://github.com/helm/helm
+
+maintainers:
+  - name: DevOps Engineer
+    email: ravi050892@gmail.com
+    url: https://github.com/ravilanka999
+
+icon: https://raw.githubusercontent.com/helm/helm/main/logo/helm.png
+
+annotations:
+  artifacthub.io/license: MIT
+  artifacthub.io/sign-key: ""
+
+dependencies: []  # Add other charts here if needed

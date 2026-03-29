@@ -1,0 +1,68 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: gitops-platform
+  namespace: argocd
+spec:
+  description: GitOps Platform Project
+  sourceRepos:
+  - https://github.com/ravilanka999/terraform-kubernetes-gitops.git
+  # Add other repos if needed: - https://github.com/your-org/helm-charts.git
+  destinations:
+  - namespace: '*'
+    server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  namespaceResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  # Sync options for all apps in this project
+  syncOptions:
+  - CreateNamespace=true
+  - PruneLast=true
+  - Validate=true
+  roles:
+  # optional - define who can manage apps in this project
+  # - name: admin
+  #   policies:
+  #   - p, proj:gitops-platform:admin, applications, create, gitops-platform/*, allow
+  #   groups:
+  #   - argo-admins
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gitops-platform-root
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: gitops-platform
+  source:
+    repoURL: https://github.com/ravilanka999/terraform-kubernetes-gitops.git
+    targetRevision: main
+    path: applications  # Will contain the set of applications to deploy
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd  # App of Apps lives in argocd namespace
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - PruneLast=true
+    - Validate=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  # Sync in ordered waves - ensures dependencies are met
+  syncOptions:
+  - SyncOptions=...
