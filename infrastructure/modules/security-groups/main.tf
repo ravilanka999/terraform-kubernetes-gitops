@@ -34,10 +34,10 @@ resource "aws_security_group" "eks_nodes" {
 
   # Allow communication between nodes in the same SG
   ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    self        = true
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
+    self      = true
   }
 
   # Allow node-to-node communication on all ports
@@ -64,7 +64,7 @@ resource "aws_security_group" "bastion" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = var.bastion_ssh_cidr != "" ? [var.bastion_ssh_cidr] : ["0.0.0.0/0"]  # WARNING: 0.0.0.0/0 is open to world - restrict in prod!
+    cidr_blocks = var.bastion_ssh_cidr != "" ? [var.bastion_ssh_cidr] : ["0.0.0.0/0"] # WARNING: 0.0.0.0/0 is open to world - restrict in prod!
   }
 
   # Allow all outbound

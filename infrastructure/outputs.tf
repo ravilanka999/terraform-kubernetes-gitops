@@ -55,7 +55,7 @@ output "eks_node_iam_role_arn" {
 
 output "kubeconfig" {
   description = "Kubeconfig for the EKS cluster (sensitive)"
-  value = <<EOT
+  value       = <<EOT
 # Run this command to update your kubeconfig:
 aws eks update-kubeconfig --name ${module.eks.cluster_name} --region ${var.aws_region}
 EOT

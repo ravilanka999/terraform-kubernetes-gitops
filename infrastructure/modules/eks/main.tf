@@ -115,7 +115,7 @@ resource "aws_eks_cluster" "main" {
   role_arn = aws_iam_role.cluster.arn
 
   # Cluster endpoint access configuration
-  endpoint_private_access = true   # Always enable for security
+  endpoint_private_access = true # Always enable for security
   endpoint_public_access  = var.enable_public_access
 
   # Kubernetes version
@@ -205,11 +205,11 @@ resource "aws_eks_node_group" "main" {
 resource "aws_eks_addon" "coredns" {
   count = var.enable_coredns ? 1 : 0
 
-  cluster_name             = aws_eks_cluster.main.name
-  addon_name               = "coredns"
-  addon_version            = "v1.11.1-eksbuild.2"  # Check for latest version
-  resolve_conflicts        = "OVERWRITE"
-  preserve                 = false
+  cluster_name      = aws_eks_cluster.main.name
+  addon_name        = "coredns"
+  addon_version     = "v1.11.1-eksbuild.2" # Check for latest version
+  resolve_conflicts = "OVERWRITE"
+  preserve          = false
 
   depends_on = [aws_eks_cluster.main]
 }
@@ -217,11 +217,11 @@ resource "aws_eks_addon" "coredns" {
 resource "aws_eks_addon" "vpc_cni" {
   count = var.enable_vpc_cni ? 1 : 0
 
-  cluster_name             = aws_eks_cluster.main.name
-  addon_name               = "vpc-cni"
-  addon_version            = "v1.19.1-eksbuild.1"
-  resolve_conflicts        = "OVERWRITE"
-  preserve                 = false
+  cluster_name      = aws_eks_cluster.main.name
+  addon_name        = "vpc-cni"
+  addon_version     = "v1.19.1-eksbuild.1"
+  resolve_conflicts = "OVERWRITE"
+  preserve          = false
 
   depends_on = [aws_eks_cluster.main]
 }
@@ -229,11 +229,11 @@ resource "aws_eks_addon" "vpc_cni" {
 resource "aws_eks_addon" "ebs_csi" {
   count = var.enable_ebs_csi_driver ? 1 : 0
 
-  cluster_name             = aws_eks_cluster.main.name
-  addon_name               = "aws-ebs-csi-driver"
-  addon_version            = "v1.27.0-eksbuild.1"
-  resolve_conflicts        = "OVERWRITE"
-  preserve                 = false
+  cluster_name      = aws_eks_cluster.main.name
+  addon_name        = "aws-ebs-csi-driver"
+  addon_version     = "v1.27.0-eksbuild.1"
+  resolve_conflicts = "OVERWRITE"
+  preserve          = false
 
   depends_on = [aws_eks_cluster.main]
 }
@@ -241,11 +241,11 @@ resource "aws_eks_addon" "ebs_csi" {
 resource "aws_eks_addon" "pod_identity" {
   count = var.enable_pod_identity ? 1 : 0
 
-  cluster_name             = aws_eks_cluster.main.name
-  addon_name               = "eks-pod-identity-agent"
-  addon_version            = "v1.3.0-eksbuild.1"
-  resolve_conflicts        = "OVERWRITE"
-  preserve                 = false
+  cluster_name      = aws_eks_cluster.main.name
+  addon_name        = "eks-pod-identity-agent"
+  addon_version     = "v1.3.0-eksbuild.1"
+  resolve_conflicts = "OVERWRITE"
+  preserve          = false
 
   depends_on = [aws_eks_cluster.main]
 }

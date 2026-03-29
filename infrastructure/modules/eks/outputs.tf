@@ -77,10 +77,10 @@ output "node_security_group_id" {
 output "addon_versions" {
   description = "Versions of installed EKS addons"
   value = {
-    coredns        = var.enable_coredns ? aws_eks_addon.coredns[0].addon_version : null
-    vpc_cni        = var.enable_vpc_cni ? aws_eks_addon.vpc_cni[0].addon_version : null
-    ebs_csi        = var.enable_ebs_csi_driver ? aws_eks_addon.ebs_csi[0].addon_version : null
-    pod_identity   = var.enable_pod_identity ? aws_eks_addon.pod_identity[0].addon_version : null
+    coredns      = var.enable_coredns ? aws_eks_addon.coredns[0].addon_version : null
+    vpc_cni      = var.enable_vpc_cni ? aws_eks_addon.vpc_cni[0].addon_version : null
+    ebs_csi      = var.enable_ebs_csi_driver ? aws_eks_addon.ebs_csi[0].addon_version : null
+    pod_identity = var.enable_pod_identity ? aws_eks_addon.pod_identity[0].addon_version : null
   }
 }
 
