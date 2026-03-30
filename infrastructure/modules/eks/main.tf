@@ -38,17 +38,24 @@ resource "aws_iam_role" "cluster" {
     ]
   })
 
-  managed_policy_arns = [
-    "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy",
-    "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController",
-  ]
-
   tags = merge(
     var.tags,
     {
       Name = "${var.project_name}-${var.environment}-eks-cluster-role"
     }
   )
+}
+
+# Attach AmazonEKSClusterPolicy to cluster role
+resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
+  role       = aws_iam_role.cluster.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+}
+
+# Attach AmazonEKSVPCResourceController to cluster role
+resource "aws_iam_role_policy_attachment" "eks_vpc_resource_controller" {
+  role       = aws_iam_role.cluster.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
 }
 
 # EKS Node IAM Role
@@ -114,16 +121,14 @@ resource "aws_eks_cluster" "main" {
   name     = var.cluster_name != "" ? var.cluster_name : "${var.project_name}-${var.environment}-${random_id.suffix.hex}"
   role_arn = aws_iam_role.cluster.arn
 
-  # Cluster endpoint access configuration
-  endpoint_private_access = true # Always enable for security
-  endpoint_public_access  = var.enable_public_access
-
   # Kubernetes version
   version = var.kubernetes_version
 
   # VPC configuration
   vpc_config {
-    subnet_ids = var.private_subnet_ids
+    subnet_ids            = var.private_subnet_ids
+    endpoint_private_access = true # Always enable for security
+    endpoint_public_access  = var.enable_public_access
 
     # Optional: Add public subnet IDs for public endpoint access
     # Typically not needed if using private endpoint + bastion
@@ -144,6 +149,11 @@ resource "aws_eks_cluster" "main" {
       Name = "${var.project_name}-${var.environment}-eks-cluster"
     }
   )
+
+  depends_on = [
+    aws_iam_role_policy_attachment.eks_cluster_policy,
+    aws_iam_role_policy_attachment.eks_vpc_resource_controller,
+  ]
 }
 
 # EKS Managed Node Group
@@ -208,7 +218,7 @@ resource "aws_eks_addon" "coredns" {
   cluster_name      = aws_eks_cluster.main.name
   addon_name        = "coredns"
   addon_version     = "v1.11.1-eksbuild.2" # Check for latest version
-  resolve_conflicts = "OVERWRITE"
+  resolve_conflicts_on_create = "OVERWRITE"
   preserve          = false
 
   depends_on = [aws_eks_cluster.main]
@@ -220,7 +230,7 @@ resource "aws_eks_addon" "vpc_cni" {
   cluster_name      = aws_eks_cluster.main.name
   addon_name        = "vpc-cni"
   addon_version     = "v1.19.1-eksbuild.1"
-  resolve_conflicts = "OVERWRITE"
+  resolve_conflicts_on_create = "OVERWRITE"
   preserve          = false
 
   depends_on = [aws_eks_cluster.main]
@@ -232,7 +242,7 @@ resource "aws_eks_addon" "ebs_csi" {
   cluster_name      = aws_eks_cluster.main.name
   addon_name        = "aws-ebs-csi-driver"
   addon_version     = "v1.27.0-eksbuild.1"
-  resolve_conflicts = "OVERWRITE"
+  resolve_conflicts_on_create = "OVERWRITE"
   preserve          = false
 
   depends_on = [aws_eks_cluster.main]
@@ -244,7 +254,7 @@ resource "aws_eks_addon" "pod_identity" {
   cluster_name      = aws_eks_cluster.main.name
   addon_name        = "eks-pod-identity-agent"
   addon_version     = "v1.3.0-eksbuild.1"
-  resolve_conflicts = "OVERWRITE"
+  resolve_conflicts_on_create = "OVERWRITE"
   preserve          = false
 
   depends_on = [aws_eks_cluster.main]

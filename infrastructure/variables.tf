@@ -80,7 +80,7 @@ variable "kubernetes_version" {
 variable "eks_node_instance_type" {
   description = "Instance type for EKS managed node group"
   type        = string
-  default     = "m5.xlarge"
+  default     = "t3.large"
 }
 
 variable "eks_node_min_size" {

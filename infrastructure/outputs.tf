@@ -40,7 +40,7 @@ output "eks_cluster_version" {
 
 output "eks_node_group_ids" {
   description = "IDs of the EKS managed node groups"
-  value       = module.eks.eks_managed_node_groups
+  value       = module.eks.node_group_ids
 }
 
 output "eks_cluster_iam_role_arn" {
@@ -62,12 +62,13 @@ EOT
   sensitive   = false
 }
 
-output "bastion_public_ip" {
-  description = "Public IP of the bastion host (if deployed)"
-  value       = var.environment == "dev" ? module.bastion.public_ip : null
-}
-
-output "load_balancer_ingress_hostname" {
-  description = "Hostname of the ALB ingress controller (if deployed)"
-  value       = var.environment == "prod" ? module.alb.ingress_hostname : null
-}
+# Optional outputs for future modules (bastion, alb) can be added when those modules are implemented
+# output "bastion_public_ip" {
+#   description = "Public IP of the bastion host"
+#   value       = var.environment == "dev" ? module.bastion.public_ip : null
+# }
+#
+# output "load_balancer_ingress_hostname" {
+#   description = "Hostname of the ALB ingress controller"
+#   value       = var.environment == "prod" ? module.alb.ingress_hostname : null
+# }

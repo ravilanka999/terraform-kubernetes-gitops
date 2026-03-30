@@ -33,6 +33,7 @@ module "eks" {
   vpc_id             = module.vpc.vpc_id
   private_subnet_ids = module.vpc.private_subnet_ids
   public_subnet_ids  = module.vpc.public_subnet_ids
+  aws_region         = var.aws_region
 
   node_instance_type = var.eks_node_instance_type
   node_min_size      = var.eks_node_min_size
