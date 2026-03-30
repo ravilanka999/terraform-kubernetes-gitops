@@ -176,7 +176,8 @@ resource "aws_eks_node_group" "main" {
   }
 
   labels = merge(
-    var.tags,
+    # Sanitize tags for Kubernetes label validation (replace spaces with hyphens)
+    { for k, v in var.tags : k => replace(v, " ", "-") },
     {
       role = "worker"
       env  = var.environment
@@ -217,7 +218,6 @@ resource "aws_eks_addon" "coredns" {
 
   cluster_name                = aws_eks_cluster.main.name
   addon_name                  = "coredns"
-  addon_version               = "v1.11.1-eksbuild.2" # Check for latest version
   resolve_conflicts_on_create = "OVERWRITE"
   preserve                    = false
 
@@ -229,7 +229,6 @@ resource "aws_eks_addon" "vpc_cni" {
 
   cluster_name                = aws_eks_cluster.main.name
   addon_name                  = "vpc-cni"
-  addon_version               = "v1.19.1-eksbuild.1"
   resolve_conflicts_on_create = "OVERWRITE"
   preserve                    = false
 
@@ -241,7 +240,6 @@ resource "aws_eks_addon" "ebs_csi" {
 
   cluster_name                = aws_eks_cluster.main.name
   addon_name                  = "aws-ebs-csi-driver"
-  addon_version               = "v1.27.0-eksbuild.1"
   resolve_conflicts_on_create = "OVERWRITE"
   preserve                    = false
 
@@ -253,7 +251,6 @@ resource "aws_eks_addon" "pod_identity" {
 
   cluster_name                = aws_eks_cluster.main.name
   addon_name                  = "eks-pod-identity-agent"
-  addon_version               = "v1.3.0-eksbuild.1"
   resolve_conflicts_on_create = "OVERWRITE"
   preserve                    = false
 

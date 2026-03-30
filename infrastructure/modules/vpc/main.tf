@@ -198,12 +198,11 @@ resource "aws_route_table_association" "database" {
 
 # VPC Flow Logs (optional, good for security audit)
 resource "aws_flow_log" "vpc" {
-  count              = var.enable_flow_logs ? 1 : 0
-  iam_role_arn       = aws_iam_role.flow_log_role[0].arn
-  log_destination    = aws_cloudwatch_log_group.flow_logs[0].arn
-  traffic_type       = "ALL"
-  vpc_id             = aws_vpc.main.id
-  transit_gateway_id = ""
+  count           = var.enable_flow_logs ? 1 : 0
+  iam_role_arn    = aws_iam_role.flow_log_role[0].arn
+  log_destination = aws_cloudwatch_log_group.flow_logs[0].arn
+  traffic_type    = "ALL"
+  vpc_id          = aws_vpc.main.id
 }
 
 resource "aws_cloudwatch_log_group" "flow_logs" {
