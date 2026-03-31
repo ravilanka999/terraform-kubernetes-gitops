@@ -12,10 +12,9 @@ commonLabels:
   environment: prod
   importance: "high"
 
-# Override replica count and HPA for production
+# Override replica count for production
 patchesStrategicMerge:
   - replica-patch.yaml
-  - hpa-prod-patch.yaml
   - probe-timeout-patch.yaml
 
 # Image configuration for prod (use specific version, not :latest)

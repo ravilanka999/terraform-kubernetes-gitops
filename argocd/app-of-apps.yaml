@@ -7,7 +7,6 @@ spec:
   description: GitOps Platform Project
   sourceRepos:
   - https://github.com/ravilanka999/terraform-kubernetes-gitops.git
-  # Add other repos if needed: - https://github.com/your-org/helm-charts.git
   destinations:
   - namespace: '*'
     server: https://kubernetes.default.svc
@@ -17,18 +16,6 @@ spec:
   namespaceResourceWhitelist:
   - group: '*'
     kind: '*'
-  # Sync options for all apps in this project
-  syncOptions:
-  - CreateNamespace=true
-  - PruneLast=true
-  - Validate=true
-  roles:
-  # optional - define who can manage apps in this project
-  # - name: admin
-  #   policies:
-  #   - p, proj:gitops-platform:admin, applications, create, gitops-platform/*, allow
-  #   groups:
-  #   - argo-admins
 
 ---
 apiVersion: argoproj.io/v1alpha1
@@ -39,7 +26,7 @@ metadata:
   finalizers:
   - resources-finalizer.argocd.argoproj.io
 spec:
-  project: gitops-platform
+  project: default
   source:
     repoURL: https://github.com/ravilanka999/terraform-kubernetes-gitops.git
     targetRevision: main
@@ -64,5 +51,4 @@ spec:
         factor: 2
         maxDuration: 3m
   # Sync in ordered waves - ensures dependencies are met
-  syncOptions:
-  - SyncOptions=...
+  # (syncOptions already defined in syncPolicy above)

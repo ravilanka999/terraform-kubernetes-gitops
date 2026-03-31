@@ -44,6 +44,7 @@ module "eks" {
   enable_ebs_csi_driver = var.enable_ebs_csi_driver
   enable_vpc_cni        = var.enable_vpc_cni
   enable_pod_identity   = var.enable_pod_identity
+  enable_public_access  = true  # Enable for demo/portfolio access
 
   control_plane_sg_id = module.security_groups.eks_control_plane_sg_id
   node_sg_id          = module.security_groups.eks_node_sg_id
