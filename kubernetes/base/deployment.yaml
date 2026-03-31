@@ -38,14 +38,7 @@ spec:
         prometheus.io/port: "8080"
         prometheus.io/path: "/metrics"
     spec:
-      # Security Context at pod level
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 2000
-        seccompProfile:
-          type: RuntimeDefault
+      # Simplified for demo (no security context to avoid permission issues)
 
       # Node selection (optional - for dedicated nodes)
       # nodeSelector:
