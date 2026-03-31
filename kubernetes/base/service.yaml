@@ -10,7 +10,7 @@ metadata:
     tier: application
     environment: all
 spec:
-  type: ClusterIP  # Use LoadBalancer or NodePort for external access
+  type: LoadBalancer  # External access for demo
   selector:
     app.kubernetes.io/name: demo-app
     app.kubernetes.io/instance: demo-app
