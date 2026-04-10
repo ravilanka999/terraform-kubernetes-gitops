@@ -161,6 +161,24 @@ docs:  ## Generate documentation (if using tools like helm-docs)
 	@echo "Documentation generated. Check helm-docs or Hugo output."
 
 # ====================
+# Docker Commands
+# ====================
+
+docker-build:  ## Build Docker image for demo app
+	@echo "Building Docker image..."
+	docker build -t ravillanka999/demo-app:latest ./demo-app
+
+docker-push:  ## Push Docker image to Docker Hub
+	@echo "Pushing Docker image..."
+	docker push ravillanka999/demo-app:latest
+
+docker-prod:  ## Build and tag production version
+	@echo "Building production Docker image..."
+	docker build -t ravillanka999/demo-app:1.0.0 ./demo-app
+	@echo "Tagging as latest too..."
+	docker tag ravillanka999/demo-app:1.0.0 ravillanka999/demo-app:latest
+
+# ====================
 # Utilities
 # ====================
 
@@ -179,6 +197,7 @@ check-prereqs:  ## Check if all prerequisites are installed
 	@command -v $(TERRAFORM) > /dev/null && echo "✓ Terraform" || echo "✗ Terraform not found"
 	@command -v $(KUBECTL) > /dev/null && echo "✓ kubectl" || echo "✗ kubectl not found"
 	@command -v $(HELM) > /dev/null && echo "✓ Helm" || echo "✗ Helm not found"
+	@command -v docker > /dev/null && echo "✓ Docker" || echo "✗ Docker not found"
 	@command -v git > /dev/null && echo "✓ Git" || echo "✗ Git not found"
 	@command -v make > /dev/null && echo "✓ Make" || echo "✗ Make not found"
 

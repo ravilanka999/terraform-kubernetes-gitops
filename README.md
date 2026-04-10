@@ -51,13 +51,14 @@ Production-grade GitOps platform on AWS EKS implementing Infrastructure as Code,
 ## Tech Stack
 
 - **Infrastructure as Code:** Terraform (AWS provider)
-- **Container Orchestration:** Kubernetes (Amazon EKS)
+- **Container Orchestration:** Kubernetes (Amazon EKS) v1.29
 - **GitOps:** Argo CD (App of Apps pattern)
 - **Packaging:** Helm + Kustomize (both demonstrated)
 - **CI/CD:** Jenkins (with shared libraries)
+- **Application:** Flask REST API with Prometheus metrics
 - **Cloud Provider:** AWS (ap-southeast-2 Sydney region)
-- **Security:** IAM Roles for Service Accounts (IRSA), Network Policies, Security Groups
-- **Observability:** Health probes, Prometheus annotations, HPA
+- **Security:** IAM Roles for Service Accounts (IRSA), Network Policies, Security Groups, non-root containers
+- **Observability:** Health probes, Prometheus annotations, HPA, structured logging
 
 ## Features
 
@@ -72,8 +73,8 @@ Production-grade GitOps platform on AWS EKS implementing Infrastructure as Code,
 
 ### Kubernetes Layer
 - ✅ Namespace isolation per environment (dev/prod)
-- ✅ Production-ready application manifests:
-  - Health probes (liveness/readiness)
+- ✅ Production-ready application manifests (Flask REST API):
+  - Health probes (/health, /ready endpoints)
   - Resource requests/limits (CPU/Memory)
   - Security contexts (non-root user)
   - Rolling update strategy
@@ -81,6 +82,8 @@ Production-grade GitOps platform on AWS EKS implementing Infrastructure as Code,
 - ✅ Network Policies for pod-to-pod security
 - ✅ StorageClass with WaitForFirstConsumer
 - ✅ Proper RBAC and service accounts
+- ✅ Prometheus metrics endpoint (/metrics)
+- ✅ Structured logging for observability
 
 ### GitOps Layer
 - ✅ App of Apps pattern for hierarchical management
@@ -92,10 +95,10 @@ Production-grade GitOps platform on AWS EKS implementing Infrastructure as Code,
 
 ### CI/CD Integration
 - ✅ Jenkins shared libraries for reusable pipelines
-- ✅ DevSecOps gates: Trivy scanning, SonarQube
-- ✅ Automated ECR image build and push
+- ✅ DevSecOps gates: Trivy scanning (Docker images), SonarQube (code quality)
+- ✅ Automated ECR image build and push (Flask app)
 - ✅ Argo CD sync triggers on image updates
-- ✅ Multi-stage promotion (dev → prod)
+- ✅ Multi-stage promotion (dev → prod) with automated testing
 
 ## Project Structure
 
@@ -215,7 +218,7 @@ kubectl apply -f argocd/app-of-apps.yaml
 # Argo CD will automatically sync:
 # 1. Create namespaces (dev, prod)
 # 2. Deploy infrastructure (StorageClass, Ingress)
-# 3. Deploy demo application with overlays
+# 3. Deploy Flask demo application with overlays
 ```
 
 ### Deploy Manually (Alternative)
@@ -263,12 +266,13 @@ kubectl apply -k kubernetes/overlays/prod
 
 ## Security
 
-- **IAM Roles for Service Accounts (IRSA):** Pods get minimal AWS permissions
-- **Network Policies:** Restrict pod-to-pod communication
-- **Security Groups:** Restrict node-level network access
-- **Non-root containers:** Applications run as non-privileged users
-- **Image scanning:** Trivy in CI pipeline
-- **Secret management:** AWS Secrets Manager integration (optional)
+- **IAM Roles for Service Accounts (IRSA):** Pods get minimal AWS permissions (implemented via Helm chart annotations)
+- **Network Policies:** Restrict pod-to-pod communication (defined in base manifests)
+- **Security Groups:** Restrict node-level network access (Terraform module)
+- **Non-root containers:** Applications run as non-privileged users (Helm values)
+- **Image scanning:** Trivy in CI pipeline (Jenkins shared library)
+- **Secret management:** AWS Secrets Manager integration (referenced but not implemented for security)
+- **Access Control:** Removed dangerous AdministratorAccess - use IAM Identity Center or OIDC for production access
 
 ## Monitoring & Observability
 
