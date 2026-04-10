@@ -1,0 +1,45 @@
+=== CHANGES NEEDED FOR RESUME ===
+
+1. ADD TO KEY ACHIEVEMENTS SECTION (after the last bullet point):
+- **Open Source Portfolio:** Built and maintain production-grade terraform-kubernetes-gitops project (github.com/ravilanka999/terraform-kubernetes-gitops) demonstrating end-to-end DevOps practices including AWS EKS provisioning via Terraform, GitOps with Argo CD, Helm-based deployments, and secure containerized applications.
+
+2. ADD TO UNIVERSUS INFOTECH EXPERIENCE (after the last bullet point):
+- **Portfolio Demonstration:** Applied equivalent GitOps/Argo CD patterns in open-source project terraform-kubernetes-gitops, showcasing secure Flask microservice deployment with health checks, Prometheus metrics, and environment-specific Helm values.
+
+3. UPDATE KEY PROJECT: CLOUD-NATIVE MICROSERVICES PLATFORM (add after existing bullet):
+- **Related Portfolio Work:** The terraform-kubernetes-gitops project extends this experience with production-grade Terraform modules, Argo CD App of Apps pattern, and Helm chart authoring for environment promotion.
+
+4. UPDATE DEVOPS PROJECTS SECTION:
+
+## AWS EKS GitOps Platform | Jan 2023
+- Provisioned EKS clusters with Terraform IaC supporting 10+ microservices in 3 environments; rolled out GitOps via Argo CD and Helm, reducing deployment errors.
+- Configured Nginx Ingress, RBAC, namespace isolation, PV/PVC, and integrated AWS Secrets Manager with Kubernetes for secret management on all pods.
+- **Live Demonstration:** This project serves as the foundation for the enhanced terraform-kubernetes-gitops portfolio, which now includes a secure Flask application, improved security posture (removed dangerous IAM policies), and environment-specific deployment strategies.
+
+## Automated CI/CD & DevSecOps Platform | Jan 2023
+- Integrated GitHub Actions and Jenkins pipelines with Trivy and SonarQube scanning — caught and resolved 50+ vulnerabilities before anything hit production.
+- Maintained 99.9% availability using Blue/Green deployments with a rollback mechanism in place; Prometheus and Grafana dashboards provided live visibility into cluster health and HPA scaling.
+- **Portfolio Evolution:** The DevSecOps principles from this project are implemented in the terraform-kubernetes-gitops project with Trivy scanning in the Makefile, secure container practices, and security-focused Helm chart values.
+
+=== LINKEDIN PROFILE UPDATES ===
+
+1. ADD TO SUMMARY SECTION (at the end):
+"I maintain a public GitHub portfolio demonstrating end-to-end DevOps practices: github.com/ravilanka999/terraform-kubernetes-gitops - featuring AWS EKS provisioning via Terraform, GitOps with Argo CD, Helm-based deployments, and secure containerized applications."
+
+2. ADD TO FEATURED SECTION:
+- Pin the repository: terraform-kubernetes-gitops
+- Description: "Production-grade AWS EKS GitOps platform showcasing Terraform modules, Argo CD, Helm charts, and secure Flask microservice with health checks and Prometheus metrics"
+
+=== GITHUB PROJECT QUICK IMPROVEMENTS ===
+
+1. ADD BASIC JENKINSFILE STAGES:
+   - Create jenkins/Jenkinsfile with stages: build, test (trivy scan), deploy (helm upgrade)
+
+2. ADD SIMPLE MONITORING:
+   - Add kube-prometheus-stack Helm chart to infra/ or as a separate monitoring directory
+
+3. UPDATE README TO MENTION:
+   - Added CI/CD pipeline evidence
+   - Added basic monitoring stack
+   - Updated security posture (removed dangerous IAM policies)
+

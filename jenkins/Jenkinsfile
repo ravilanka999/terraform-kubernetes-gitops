@@ -1,0 +1,140 @@
+pipeline {
+    agent any
+
+    environment {
+        // Docker image name
+        DOCKER_IMAGE = 'ravillanka999/demo-app'
+        // Terraform working directory
+        TF_DIR = 'infrastructure'
+        // Kubernetes namespace
+        K8S_NAMESPACE = 'dev'
+        // Helm release name
+        HELM_RELEASE = 'demo-app'
+        // Helm chart path
+        HELM_CHART = './helm-charts/demo-app'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    // Build Docker image
+                    sh "docker build -t ${DOCKER_IMAGE}:${env.BUILD_NUMBER} ./demo-app"
+                    // Also tag as latest for simplicity in this demo
+                    sh "docker tag ${DOCKER_IMAGE}:${env.BUILD_NUMBER} ${DOCKER_IMAGE}:latest"
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                // Run Trivy security scan on Docker image
+                sh '''
+                # Install Trivy if not present
+                if ! command -v trivy &> /dev/null; then
+                    curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+                fi
+                # Scan Docker image for vulnerabilities
+                trivy image --exit-code 1 --severity HIGH,CRITICAL ${DOCKER_IMAGE}:${env.BUILD_NUMBER}
+                '''
+
+                // Validate Terraform configuration
+                dir("${TF_DIR}") {
+                    sh "terraform init -backend=false"
+                    sh "terraform validate"
+                }
+
+                // Lint Kubernetes manifests (basic validation)
+                sh '''
+                # Install kubeval if not present
+                if ! command -v kubeval &> /dev/null; then
+                    curl -sL https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz | tar xz
+                    chmod +x kubeval
+                    sudo mv kubeval /usr/local/bin/
+                fi
+                # Validate Kubernetes manifests
+                find kubernetes/ -name "*.yaml" -exec kubeval --ignore-missing-schemas {} \\;
+                find helm-charts/ -name "*.yaml" -exec kubeval --ignore-missing-schemas {} \\;
+                '''
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                // In a real scenario, you'd push to ECR or Docker Hub with credentials
+                // For demo purposes, we'll just verify the image exists
+                sh "docker images | grep ${DOCKER_IMAGE}"
+            }
+        }
+
+        stage('Deploy to Dev') {
+            when {
+                branch 'main'
+            }
+            steps {
+                // Package Helm chart
+                sh "helm dependency update ${HELM_CHART}"
+                sh "helm lint ${HELM_CHART}"
+
+                // Upgrade or install Helm release
+                script {
+                    // Check if release already exists
+                    def releaseExists = sh (
+                        script: "helm status ${HELM_RELEASE} -n ${K8S_NAMESPACE} 2>/dev/null || echo 'false'",
+                        returnStatus: true
+                    ) == 0
+
+                    if (releaseExists) {
+                        sh """
+                        helm upgrade ${HELM_RELEASE} ${HELM_CHART} \\
+                            --namespace ${K8S_NAMESPACE} \\
+                            --values ${HELM_CHART}/values-dev.yaml \\
+                            --set image.tag=${env.BUILD_NUMBER}
+                        """
+                    } else {
+                        sh """
+                        helm install ${HELM_RELEASE} ${HELM_CHART} \\
+                            --namespace ${K8S_NAMESPACE} \\
+                            --create-namespace \\
+                            --values ${HELM_CHART}/values-dev.yaml \\
+                            --set image.tag=${env.BUILD_NUMBER}
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Verify Deployment') {
+            when {
+                branch 'main'
+            }
+            steps {
+                // Wait for rollout to complete
+                sh "kubectl rollout status deployment/${HELM_RELEASE} -n ${K8S_NAMESPACE} --timeout=120s"
+                // Check that pods are ready
+                sh "kubectl get pods -n ${K8S_NAMESPACE} -l app.kubernetes.io/name=demo-app"
+                # Basic service check
+                sh "kubectl get svc -n ${K8S_NAMESPACE} ${HELM_RELEASE}"
+            }
+        }
+    }
+
+    post {
+        always {
+            // Clean up Docker images to save space
+            sh "docker rmi ${DOCKER_IMAGE}:${env.BUILD_NUMBER} ${DOCKER_IMAGE}:latest || true"
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}
