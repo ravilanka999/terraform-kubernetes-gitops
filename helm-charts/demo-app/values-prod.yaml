@@ -5,10 +5,9 @@ environment: production
 replicaCount: 3
 
 image:
+  repository: ravillanka999/demo-app
   tag: "1.0.0"  # Pin to specific production version
   pullPolicy: IfNotPresent
-  # For real ECR:
-  # repository: "123456789012.dkr.ecr.ap-southeast-2.amazonaws.com/demo-app"
 
 service:
   type: LoadBalancer  # External access in prod

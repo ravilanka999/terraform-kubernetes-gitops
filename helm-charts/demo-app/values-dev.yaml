@@ -5,7 +5,7 @@ environment: development
 replicaCount: 2
 
 image:
-  tag: "alpine"  # Use generic dev image
+  tag: "dev"  # Development tag
   pullPolicy: IfNotPresent
 
 autoscaling:

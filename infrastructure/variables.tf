@@ -74,7 +74,7 @@ variable "eks_cluster_name" {
 variable "kubernetes_version" {
   description = "Kubernetes version for EKS cluster"
   type        = string
-  default     = "1.33"
+  default     = "1.29"
 }
 
 variable "eks_node_instance_type" {
@@ -132,7 +132,7 @@ variable "create_additional_sgs" {
 }
 
 variable "enable_cluster_creator_admin" {
-  description = "Give cluster creator admin permissions (for demo/learning only)"
+  description = "Give cluster creator admin permissions (DANGEROUS - only for temporary demo/learning, NEVER use in production)"
   type        = bool
-  default     = true
+  default     = false
 }

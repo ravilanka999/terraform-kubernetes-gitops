@@ -52,11 +52,10 @@ module "eks" {
   tags = var.tags
 }
 
-# Optional: Enable cluster creator admin permissions
-# In production, use IAM Identity Center or OIDC instead
-resource "aws_iam_role_policy_attachment" "cluster_creator_admin" {
-  count = var.enable_cluster_creator_admin ? 1 : 0
-
-  role       = module.eks.cluster_iam_role_name
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
-}
+# REMOVED: Dangerous admin permissions attachment
+# For production access, properly configure:
+# 1. IAM Roles for Service Accounts (IRSA) for pod-level AWS access
+# 2. IAM Identity Center or OIDC for human user access
+# 3. EKS access entries and IAM mappings for granular permissions
+#
+# Never use AdministratorAccess for cluster creator in any environment

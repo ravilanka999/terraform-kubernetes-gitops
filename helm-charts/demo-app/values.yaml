@@ -4,9 +4,9 @@
 replicaCount: 2
 
 image:
-  repository: nginx
+  repository: ravillanka999/demo-app
   pullPolicy: IfNotPresent
-  tag: "alpine"
+  tag: "latest"
 
 # Override for different environments (set in values-<env>.yaml or via Argo CD)
 # image:
@@ -84,7 +84,7 @@ probes:
   liveness:
     httpGet:
       path: /health
-      port: 8080
+      port: 5000
     initialDelaySeconds: 30
     periodSeconds: 10
     timeoutSeconds: 5
@@ -92,8 +92,8 @@ probes:
     failureThreshold: 3
   readiness:
     httpGet:
-      path: /health
-      port: 8080
+      path: /ready
+      port: 5000
     initialDelaySeconds: 5
     periodSeconds: 10
     timeoutSeconds: 5
@@ -102,7 +102,7 @@ probes:
   startup:
     httpGet:
       path: /health
-      port: 8080
+      port: 5000
     initialDelaySeconds: 5
     periodSeconds: 10
     timeoutSeconds: 5

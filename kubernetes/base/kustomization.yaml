@@ -23,8 +23,8 @@ namePrefix: ""
 
 # Images can be overridden in overlays
 images:
-  - name: nginx  # Replace with your actual image name
-    newTag: "alpine"
+  - name: ravillanka999/demo-app  # Replace with your actual ECR repo
+    newTag: "latest"
 
 # ConfigMapGenerator for generating configmaps from files (optional)
 # configMapGenerator:
