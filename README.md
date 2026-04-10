@@ -54,10 +54,11 @@ Production-grade GitOps platform on AWS EKS implementing Infrastructure as Code,
 - **Container Orchestration:** Kubernetes (Amazon EKS) v1.29
 - **GitOps:** Argo CD (App of Apps pattern)
 - **Packaging:** Helm + Kustomize (both demonstrated)
-- **CI/CD:** Jenkins (with shared libraries)
+- **CI/CD:** Jenkins (with shared libraries) - Pipeline includes build, Trivy scanning, test, and deploy stages
 - **Application:** Flask REST API with Prometheus metrics
+- **Monitoring:** Prometheus/Grafana stack available (kube-prometheus-stack)
 - **Cloud Provider:** AWS (ap-southeast-2 Sydney region)
-- **Security:** IAM Roles for Service Accounts (IRSA), Network Policies, Security Groups, non-root containers
+- **Security:** IAM Roles for Service Accounts (IRSA), Network Policies, Security Groups, non-root containers, least-privilege principles
 - **Observability:** Health probes, Prometheus annotations, HPA, structured logging
 
 ## Features
@@ -322,6 +323,16 @@ This project is part of a larger learning ecosystem:
 ## Author
 
 Built from scratch to demonstrate production-grade DevOps practices. All code is original.
+
+## Recent Improvements (April 2026)
+
+- **Authentic Application:** Replaced placeholder nginx with original Flask REST API
+- **Security Hardening:** Removed dangerous IAM AdministratorAccess anti-pattern
+- **Current Technology:** Updated to Kubernetes v1.29 (from falsely claimed 1.33)
+- **CI/CD Evidence:** Added Jenkinsfile with build, test, scan, and deploy stages
+- **Monitoring Foundation:** Added kube-prometheus-stack documentation
+- **Enhanced Documentation:** Updated README to accurately reflect all components
+- **Production Practices:** Proper resource limits, health checks, security contexts, and environment promotion
 
 ---
 
