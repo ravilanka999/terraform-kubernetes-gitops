@@ -13,13 +13,13 @@
 
 ## What This Platform Demonstrates
 
-This repository showcases how I design and operate cloud-native infrastructure in a professional DevOps context. The focus is entirely on the **platform layer** — how infrastructure is provisioned, how workloads are deployed, how pipelines enforce quality and security, and how the system stays observable and resilient.
+This repository showcases how I design and operate cloud-native infrastructure. The focus is entirely on the **platform layer** — how infrastructure is provisioned, how workloads are deployed reliably, how pipelines enforce quality and security, and how systems stay observable and resilient under real production conditions.
 
-> **Note:** The application workload (a minimal Flask REST API) exists solely as a deployable artefact to exercise the platform. The value here is not the application — it is everything around it.
+> **Note:** The application workload (a Flask REST API) exists solely as a deployable artefact to exercise the platform. The value is everything around it — the IaC, the GitOps engine, the pipeline, and the operational standards applied to every workload.
 
 | Capability | Implementation |
 |---|---|
-| Infrastructure as Code | Terraform modules (VPC, EKS, Security Groups) with remote state |
+| Infrastructure as Code | Modular Terraform (VPC, EKS, Security Groups) with S3 remote state |
 | GitOps delivery | Argo CD App of Apps — declarative, self-healing, drift detection |
 | Multi-environment | Dev and prod with Kustomize overlays and Helm value overrides |
 | CI/CD pipeline | Jenkins Shared Library with DevSecOps gates (Trivy + SonarQube) |
@@ -80,51 +80,49 @@ terraform-kubernetes-gitops/
 │
 ├── infrastructure/                   # All AWS provisioning via Terraform
 │   ├── main.tf                       # Root module
-│   ├── variables.tf / outputs.tf
+│   ├── variables.tf / outputs.tf / providers.tf
 │   ├── backend.tf                    # S3 remote state + DynamoDB lock
-│   ├── terraform.tfvars.example
+│   ├── terraform.tfvars.example      # Example values to get started
 │   └── modules/
-│       ├── vpc/                      # Multi-AZ VPC, public/private subnets
-│       ├── eks/                      # EKS node groups, IRSA, OIDC
-│       └── security-groups/          # Least-privilege SG rules
+│       ├── vpc/                      # Multi-AZ VPC, public/private subnets, NAT
+│       ├── eks/                      # EKS managed node groups, OIDC, IRSA
+│       └── security-groups/          # Least-privilege security group rules
 │
 ├── kubernetes/                       # Kubernetes manifests
 │   ├── base/                         # Reusable base templates
 │   │   ├── deployment.yaml           # Non-root, resource-limited, health-probed
 │   │   ├── hpa.yaml                  # Horizontal Pod Autoscaler
-│   │   ├── networkpolicy.yaml        # Pod-to-pod traffic rules
+│   │   ├── networkpolicy.yaml        # Pod-to-pod traffic control
 │   │   └── kustomization.yaml
 │   └── overlays/
-│       ├── dev/                      # Dev patches (replicas, limits)
-│       └── prod/                     # Prod patches (HA, strict probes)
+│       ├── dev/                      # Dev: 1 replica, relaxed probes
+│       └── prod/                     # Prod: 3 replicas, strict probes, anti-affinity
 │
-├── helm-charts/demo-app/             # Helm packaging with per-env values
-│   ├── values.yaml
-│   ├── values-dev.yaml
-│   ├── values-prod.yaml
-│   └── templates/                    # Deployment, Service, HPA, NetworkPolicy
+├── helm-charts/demo-app/             # Helm packaging with per-environment values
+│   ├── values.yaml / values-dev.yaml / values-prod.yaml
+│   └── templates/                    # Deployment, Service, HPA, NetworkPolicy, ConfigMap
 │
 ├── argocd/                           # GitOps definitions
-│   ├── app-of-apps.yaml              # Root application
+│   ├── app-of-apps.yaml              # Root application — manages everything below
 │   └── applications/
-│       ├── namespaces.yaml
-│       ├── infra-apps.yaml
-│       ├── helm-apps.yaml
-│       └── kustomize-apps.yaml
+│       ├── namespaces.yaml           # Environment namespace declarations
+│       ├── infra-apps.yaml           # StorageClass, Ingress Controller
+│       ├── helm-apps.yaml            # Application via Helm (prod)
+│       └── kustomize-apps.yaml       # Application via Kustomize (dev)
 │
-├── jenkins/                          # CI/CD
-│   ├── Jenkinsfile                   # Multi-stage pipeline
+├── jenkins/                          # CI/CD pipeline
+│   ├── Jenkinsfile                   # Multi-stage pipeline definition
 │   └── shared-library/vars/
 │       └── eksPipeline.groovy        # Reusable shared library
 │
 ├── namespaces/                       # dev / prod / argocd / monitoring
-├── monitoring/                       # kube-prometheus-stack integration
+├── monitoring/                       # kube-prometheus-stack integration guide
 ├── docs/
-│   ├── architecture-decisions.md     # ADRs
-│   ├── security-considerations.md
-│   └── deployment-guide.md
-├── .github/workflows/terraform.yml   # GitHub Actions — Terraform plan on PR
-└── Makefile                          # Convenience targets
+│   ├── architecture-decisions.md     # ADRs explaining every key decision
+│   ├── security-considerations.md    # Security model and controls
+│   └── deployment-guide.md           # Step-by-step deployment walkthrough
+├── .github/workflows/terraform.yml   # GitHub Actions — Terraform validate/plan on PR
+└── Makefile                          # Common operational targets
 ```
 
 ---
@@ -135,44 +133,44 @@ terraform-kubernetes-gitops/
 
 Each module is self-contained with its own `variables.tf`, `outputs.tf`, and `README.md`.
 
-**VPC module** provisions a multi-AZ network with public subnets (load balancers), private subnets (worker nodes), NAT Gateways, and proper route tables. All subnet tagging follows EKS conventions for ALB/NLB auto-discovery.
+**VPC module** provisions a multi-AZ network: public subnets for load balancers, private subnets for worker nodes, NAT Gateways per AZ, and route tables with proper EKS subnet tagging for ALB/NLB auto-discovery.
 
-**EKS module** provisions managed node groups using the AL2023 AMI, configures OIDC for IRSA, enables the EBS CSI driver for dynamic storage, and sets up the AWS Load Balancer Controller. The cluster endpoint is private — access is via bastion host only.
+**EKS module** provisions managed node groups on AL2023 AMI, configures OIDC provider for IRSA, enables the EBS CSI driver for dynamic persistent storage, and installs the AWS Load Balancer Controller. The cluster API endpoint is private — access goes through bastion host only, not the public internet.
 
-**Remote state** uses S3 with versioning and DynamoDB locking to prevent concurrent apply conflicts across team members or pipelines.
+**Remote state** uses S3 with versioning enabled and DynamoDB for state locking, preventing concurrent `terraform apply` conflicts across team members or pipeline runs.
 
 ### Security Design
 
-| Control | Implementation | Reason |
+| Control | Implementation | Why |
 |---|---|---|
-| IRSA | Pod service accounts mapped to IAM roles via OIDC | No long-lived credentials on nodes |
-| Network Policies | Deny-all baseline, explicit allow rules per workload | Limits blast radius of a compromised pod |
-| Non-root containers | `runAsNonRoot: true`, `runAsUser: 1000` | Defence in depth against container escapes |
-| Image scanning | Trivy in Jenkins — blocks pipeline on HIGH/CRITICAL CVEs | Shift-left security, not post-deploy |
-| IAM least privilege | No `AdministratorAccess` anywhere in the platform | AWS Well-Architected compliant |
-| Secret management | AWS Secrets Manager — no secrets stored in Git | Compliance-ready from day one |
+| IRSA | Pod service accounts mapped to IAM roles via OIDC | No static credentials on nodes or in environment variables |
+| Network Policies | Deny-all baseline + explicit allow rules per workload | Limits blast radius if a pod is compromised |
+| Non-root containers | `runAsNonRoot: true`, `runAsUser: 1000` | Defence-in-depth against container escape |
+| Image scanning | Trivy in Jenkins pipeline — blocks on HIGH/CRITICAL | Shift-left: vulnerabilities caught before deployment |
+| IAM least privilege | No `AdministratorAccess` — scoped roles per service | AWS Well-Architected Security Pillar compliant |
+| Secret management | AWS Secrets Manager via IRSA pod-level injection | Zero secrets in Git, zero secrets in environment variables |
 
 ---
 
 ## GitOps Layer — Argo CD App of Apps
 
-The App of Apps pattern means a single root application manages all child applications declaratively. Argo CD continuously reconciles the live cluster state with what is committed in Git.
+A single root application manages all child applications declaratively. Argo CD continuously reconciles the live cluster state against Git — drift is automatically corrected.
 
 ```
-app-of-apps.yaml              (root — syncs everything below)
-├── namespaces.yaml           → creates dev, prod, argocd, monitoring namespaces
-├── infra-apps.yaml           → deploys StorageClass and Ingress Controller
-├── helm-apps.yaml            → deploys application via Helm (prod values)
-└── kustomize-apps.yaml       → deploys application via Kustomize (dev overlay)
+app-of-apps.yaml                    ← root, apply this once
+├── namespaces.yaml                 → creates dev, prod, argocd, monitoring
+├── infra-apps.yaml                 → StorageClass + Ingress Controller
+├── helm-apps.yaml                  → application via Helm (prod values)
+└── kustomize-apps.yaml             → application via Kustomize (dev overlay)
 ```
 
-**Why both Helm and Kustomize?** This is deliberate. Helm handles third-party charts with complex value trees (ingress-nginx, kube-prometheus-stack). Kustomize handles environment-specific patching of raw manifests without a templating language. Both patterns are standard in real platform teams.
+**Why both Helm and Kustomize?** Helm handles third-party charts where a rich ecosystem exists (ingress-nginx, kube-prometheus-stack). Kustomize handles environment-specific patching of internal manifests without a templating language. Using both is standard in real platform teams — this repo demonstrates both patterns intentionally.
 
 ---
 
 ## CI/CD Pipeline — Jenkins Shared Library
 
-The Jenkins Shared Library (`eksPipeline.groovy`) is the key pattern here. Instead of duplicating pipeline logic across every repo, any team calls a single reusable function:
+Instead of duplicating pipeline logic across every repository, teams call a single shared function. This is the same pattern used to standardise CI/CD across 8+ development teams in production.
 
 ```groovy
 // Any team's Jenkinsfile — one call gets a full DevSecOps pipeline
@@ -183,39 +181,37 @@ eksPipeline(
 )
 ```
 
-The shared library runs these stages automatically:
+Stages run automatically:
 
 ```
-Stage 1 → Checkout
-Stage 2 → Build Docker image
-Stage 3 → Trivy scan        (blocks on HIGH or CRITICAL CVEs)
-Stage 4 → SonarQube gate    (blocks below coverage threshold)
-Stage 5 → Terraform validate
-Stage 6 → Push to ECR
-Stage 7 → Trigger Argo CD sync
+1. Checkout
+2. Build Docker image
+3. Trivy scan          → blocks pipeline on HIGH or CRITICAL CVEs
+4. SonarQube gate      → blocks below code quality threshold
+5. Terraform validate  → catches IaC issues before apply
+6. Push to ECR
+7. Trigger Argo CD sync
 ```
 
-This is the same pattern I implemented at Universus Infotech to standardise CI/CD across 8+ development teams — one update to the shared library propagates improvements to every pipeline simultaneously.
+One update to the shared library propagates security and quality improvements to every team's pipeline simultaneously — no copy-paste drift.
 
 ---
 
 ## Kubernetes Operational Standards
 
-Every workload in this platform follows the same production manifest standards:
+Every workload in this platform meets the same baseline before it can reach production:
 
 ```yaml
-readinessProbe:             # Traffic only routes when the app is ready
-  httpGet:
-    path: /ready
-livenessProbe:              # Pod restarts automatically if the app hangs
-  httpGet:
-    path: /health
+readinessProbe:              # No traffic until app is confirmed ready
+  httpGet: { path: /ready }
+livenessProbe:               # Auto-restart if app becomes unresponsive
+  httpGet: { path: /health }
 resources:
-  requests:
-    cpu: "100m"             # Scheduler uses this for node placement
+  requests:                  # Drives accurate scheduler placement
+    cpu: "100m"
     memory: "128Mi"
-  limits:
-    cpu: "500m"             # Prevents noisy-neighbour CPU starvation
+  limits:                    # Prevents noisy-neighbour resource starvation
+    cpu: "500m"
     memory: "256Mi"
 securityContext:
   runAsNonRoot: true
@@ -223,19 +219,17 @@ securityContext:
   readOnlyRootFilesystem: true
 ```
 
-**HPA** is configured on all deployments — the platform scales workloads automatically on CPU utilisation without manual intervention.
-
-**Kustomize overlays** allow dev to run with 1 replica and relaxed probe timeouts, while prod runs with 3 replicas, stricter probes, and pod anti-affinity rules to spread across availability zones.
+Dev overlay runs 1 replica with relaxed probe timeouts. Prod overlay runs 3 replicas with strict probes and pod anti-affinity rules spreading pods across availability zones.
 
 ---
 
 ## Monitoring & Observability
 
-Observability is built into the platform standard — not added as an afterthought.
+Observability is part of the platform standard — not bolted on later.
 
-- All pods carry Prometheus scrape annotations (`prometheus.io/scrape: "true"`)
-- Health endpoints (`/health`, `/ready`) required by the deployment standard
-- CloudWatch Container Insights enabled at the EKS cluster level
+- All pods carry `prometheus.io/scrape: "true"` annotations
+- `/health` and `/ready` endpoints required by the deployment standard
+- CloudWatch Container Insights enabled at the cluster level
 - kube-prometheus-stack integration documented in `/monitoring`
 - HPA scaling events and Argo CD sync results feed into alerting
 
@@ -245,18 +239,19 @@ Observability is built into the platform standard — not added as an afterthoug
 
 ### Prerequisites
 
-- AWS CLI configured (`aws configure`)
+- AWS CLI with credentials configured (`aws configure`)
 - Terraform >= 1.5
 - kubectl
-- Argo CD CLI (optional)
+- Argo CD CLI (optional — UI also works)
 
 ### 1 — Provision infrastructure
 
 ```bash
 cd infrastructure
+cp terraform.tfvars.example terraform.tfvars   # fill in your values
 terraform init
-terraform plan  -var="aws_region=ap-southeast-2"
-terraform apply -var="aws_region=ap-southeast-2"
+terraform plan  -var-file=terraform.tfvars
+terraform apply -var-file=terraform.tfvars
 ```
 
 ### 2 — Configure kubectl
@@ -270,15 +265,14 @@ aws eks update-kubeconfig \
 ### 3 — Bootstrap GitOps
 
 ```bash
-# Install Argo CD
 kubectl apply -n argocd \
   -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
-# Apply the root App of Apps — Argo CD handles everything from here
+# Apply once — Argo CD manages everything from here
 kubectl apply -f argocd/app-of-apps.yaml
 ```
 
-### 4 — Useful Makefile targets
+### 4 — Common Makefile targets
 
 ```bash
 make plan          # terraform plan
@@ -290,19 +284,36 @@ make sync          # trigger Argo CD sync
 
 ---
 
-## Why I Built It This Way
+## Design Rationale
 
-Every decision in this platform is intentional.
+Every decision in this platform is deliberate.
 
-**Terraform modules over a monolithic config** — Real teams reuse infrastructure patterns. Modules enforce a consistent, tested interface and make multi-account provisioning tractable without duplicating code.
+**Modular Terraform over a monolithic config** — Modules enforce a consistent, tested interface. Multi-account provisioning becomes tractable. Teams reuse without copying.
 
-**Argo CD over push-based CI deployment** — Pull-based GitOps means the cluster always reconciles to a known Git state. Drift is detected and corrected automatically. Rollback is a `git revert`.
+**Pull-based GitOps over push-based CI deployment** — The cluster always reconciles to a known Git state. Rollback is `git revert`. Drift is detected and corrected automatically.
 
-**Jenkins Shared Library** — Copy-paste CI pipelines across teams are a maintenance disaster. One shared library means one place to update the Trivy version, one place to change the quality gate threshold, zero drift between teams.
+**Jenkins Shared Library over per-repo pipelines** — Copy-paste pipelines across teams create maintenance debt and drift. One library, one place to raise the security bar for everyone.
 
-**Both Kustomize and Helm** — In real environments you use the right tool for the job. Helm for third-party charts with complex value hierarchies. Kustomize for patching your own manifests cleanly across environments.
+**Both Kustomize and Helm** — Helm for third-party charts with complex value hierarchies. Kustomize for patching internal manifests cleanly across environments. The right tool for each job.
 
-**Security from day one** — IRSA, Network Policies, and non-root containers are not optional extras. They are part of the deployment standard. Every workload must meet these requirements before it reaches prod.
+**Security from day one, not day ninety** — IRSA, Network Policies, non-root containers, and image scanning are not optional extras. They are requirements. Every workload meets them before reaching production.
+
+---
+
+## Troubleshooting
+
+```bash
+# Argo CD sync issues
+kubectl describe app <app-name> -n argocd
+
+# Terraform state
+terraform state list
+terraform state rm <resource>
+
+# Pod not starting
+kubectl describe pod <pod-name> -n <namespace>
+kubectl get events -n <namespace> --sort-by='.lastTimestamp'
+```
 
 ---
 
@@ -314,3 +325,7 @@ Canberra, ACT, Australia | Australian Permanent Resident
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-ravikumarlanka-0A66C2?logo=linkedin&logoColor=white)](https://linkedin.com/in/ravikumarlanka)
 [![GitHub](https://img.shields.io/badge/GitHub-ravilanka999-181717?logo=github&logoColor=white)](https://github.com/ravilanka999)
 [![Email](https://img.shields.io/badge/Email-ravikumar.lanka%40outlook.com-0078D4?logo=microsoftoutlook&logoColor=white)](mailto:ravikumar.lanka@outlook.com)
+
+---
+
+*MIT License — see LICENSE for details.*
